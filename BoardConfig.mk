@@ -88,8 +88,8 @@ TARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-linux-android-
 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 #TARGET_KERNEL_APPEND_DTB := true
 TARGET_KERNEL_SOURCE := kernel/oneplus/sdm845
-TARGET_KERNEL_CONFIG := nitrogen_defconfig
-BOARD_KERNEL_SEPARATED_DTBO := true
+TARGET_KERNEL_CONFIG := aex_defconfig
+#BOARD_KERNEL_SEPARATED_DTBO := true
 
 # partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
@@ -146,6 +146,12 @@ TARGET_CAMERA_NEEDS_CLIENT_INFO := true
 USE_CAMERA_STUB := true
 TARGET_USES_MEDIA_EXTENSIONS := false
 BOARD_USES_SNAPDRAGONCAMERA_VERSION := 2
+TARGET_USES_QTI_CAMERA_DEVICE := true
+TARGET_ENABLE_QC_AV_ENHANCEMENTS := true
+
+# Audio/media
+TARGET_QCOM_AUDIO_VARIANT := sdm845
+TARGET_QCOM_MEDIA_VARIANT := sdm845
 
 # Disable secure discard because it's SLOW
 BOARD_SUPPRESS_SECURE_ERASE := true
@@ -229,7 +235,7 @@ BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED := true
 
 # selinux
 include device/qcom/sepolicy/sepolicy.mk
-include vendor/omni/sepolicy/sepolicy.mk
+include vendor/nitrogen/sepolicy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += $(BOARD_PATH)/sepolicy/qcom
 BOARD_PLAT_PUBLIC_SEPOLICY_DIR += $(BOARD_PATH)/sepolicy/public
 BOARD_PLAT_PRIVATE_SEPOLICY_DIR += $(BOARD_PATH)/sepolicy/private
