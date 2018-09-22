@@ -88,7 +88,7 @@ TARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-linux-android-
 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 #TARGET_KERNEL_APPEND_DTB := true
 TARGET_KERNEL_SOURCE := kernel/oneplus/sdm845
-TARGET_KERNEL_CONFIG := aex_defconfig
+TARGET_KERNEL_CONFIG := nitrogen_defconfig
 #BOARD_KERNEL_SEPARATED_DTBO := true
 
 # partitions
@@ -113,6 +113,9 @@ TARGET_USES_MKE2FS := true
 
 # Generic AOSP image always requires separate vendor.img
 TARGET_COPY_OUT_VENDOR := vendor
+
+#Enable DRM plugins 64 bit compilation
+TARGET_ENABLE_MEDIADRM_64 := true
 
 # Generic AOSP image does NOT support HWC1
 TARGET_USES_HWC2 := true
