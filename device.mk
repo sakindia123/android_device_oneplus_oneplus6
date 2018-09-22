@@ -163,10 +163,6 @@ PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/media_codecs_google_telephony.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/media_codecs_google_video.xml
 
-# Doze
-PRODUCT_PACKAGES += \
-    OneplusDoze
-
 # NFC
 PRODUCT_PACKAGES += \
     NfcNci \
@@ -212,11 +208,8 @@ PRODUCT_PACKAGES += \
     RcsService \
     PresencePolling
 
-#PRODUCT_PACKAGES += \
-    WfdCommon
-
 PRODUCT_BOOT_JARS += \
-#    WfdCommon
+    WfdCommon
 
 # Netutils
 PRODUCT_PACKAGES += \
