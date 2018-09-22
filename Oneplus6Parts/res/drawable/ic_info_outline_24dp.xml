@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 The OmniROM Project
+<!--
+     Copyright (C) 2016 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,16 +14,13 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
-    <string-array name="slider_key_action_entries" translatable="false">
-        <item>@string/slider_mode_off</item>
-        <item>@string/slider_mode_vibrate</item>
-        <item>@string/slider_mode_zen</item>
-    </string-array>
-
-    <string-array name="slider_key_action_values" translatable="false">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-    </string-array>
-</resources>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24.0"
+        android:viewportHeight="24.0"
+        android:tint="?android:attr/textColorSecondary">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M11,17h2v-6h-2v6zM12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.41,0 -8,-3.59 -8,-8s3.59,-8 8,-8 8,3.59 8,8 -3.59,8 -8,8zM11,9h2L13,7h-2v2z"/>
+</vector>

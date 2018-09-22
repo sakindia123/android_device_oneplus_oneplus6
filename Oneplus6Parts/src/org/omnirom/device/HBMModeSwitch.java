@@ -19,13 +19,15 @@ package org.omnirom.device;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceManager;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.Preference.OnPreferenceChangeListener;
+import android.support.v7.preference.PreferenceManager;
+
+import org.omnirom.device.DeviceSettings;
 
 public class HBMModeSwitch implements OnPreferenceChangeListener {
 
-    private static final String FILE = "/sys/devices/virtual/graphics/fb0/hbm";
+    private static final String FILE = "/sys/devices/platform/soc/ae00000.qcom,mdss_mdp/drm/card0/card0-DSI-1/hbm";
 
     public static String getFile() {
         if (Utils.fileWritable(FILE)) {
@@ -45,7 +47,7 @@ public class HBMModeSwitch implements OnPreferenceChangeListener {
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         Boolean enabled = (Boolean) newValue;
-        Utils.writeValue(getFile(), enabled ? "2" : "0");
+        Utils.writeValue(getFile(), enabled ? "1" : "0");
         return true;
     }
 }

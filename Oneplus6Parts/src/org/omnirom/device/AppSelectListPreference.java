@@ -28,7 +28,8 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
-import android.preference.DialogPreference;
+import android.support.v7.preference.PreferenceViewHolder;
+import android.support.v14.preference.PreferenceDialogFragment;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,7 +46,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class AppSelectListPreference extends DialogPreference implements DialogInterface.OnDismissListener {
+import com.android.settingslib.CustomDialogPreference;
+
+public class AppSelectListPreference extends CustomDialogPreference {
 
     private static String TAG = "AppSelectListPreference";
 
@@ -55,16 +58,24 @@ public class AppSelectListPreference extends DialogPreference implements DialogI
     public static final String MUSIC_PLAY_ENTRY = "music_play";
     public static final String MUSIC_PREV_ENTRY = "music_prev";
     public static final String MUSIC_NEXT_ENTRY = "music_next";
+    public static final String WAKE_ENTRY = "wake";
+    public static final String VOLUME_UP_ENTRY = "volume_up";
+    public static final String VOLUME_DOWN_ENTRY = "volume_down";
+    public static final String BROWSE_SCROLL_DOWN_ENTRY = "browse_scroll_down";
+    public static final String BROWSE_SCROLL_UP_ENTRY = "browse_scroll_up";
+    public static final String NAVIGATE_BACK_ENTRY = "navigate_back";
+    public static final String NAVIGATE_HOME_ENTRY = "navigate_home";
+    public static final String NAVIGATE_RECENT_ENTRY = "navigate_recent";
 
-    private ImageView mAppIcon;
     private AppSelectListAdapter mAdapter;
     private Drawable mAppIconDrawable;
     private int mAppIconResourceId;
     private CharSequence mTitle;
     private String mValue;
     private PackageManager mPm;
+    private List<PackageItem> mInstalledPackages = new LinkedList<PackageItem>();
 
-    public class PackageItem implements Comparable<PackageItem> {
+    public static class PackageItem implements Comparable<PackageItem> {
         public final CharSequence mTitle;
         public final int mAppIconResourceId;
         public final ComponentName mComponentName;
@@ -103,46 +114,11 @@ public class AppSelectListPreference extends DialogPreference implements DialogI
         }
     }
 
-    public class AppSelectListAdapter extends BaseAdapter implements Runnable {
+    public class AppSelectListAdapter extends BaseAdapter {
         private LayoutInflater mInflater;
-        private List<PackageItem> mInstalledPackages = new LinkedList<PackageItem>();
-
-        private final Handler mHandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                // now add the special actions on top
-                PackageItem cameraItem = new PackageItem(getContext().getResources().getString(R.string.camera_entry),
-                        R.drawable.ic_camera, CAMERA_ENTRY);
-                mInstalledPackages.add(0, cameraItem);
-
-                PackageItem torchItem = new PackageItem(getContext().getResources().getString(R.string.torch_entry),
-                        R.drawable.ic_flashlight, TORCH_ENTRY);
-                mInstalledPackages.add(0, torchItem);
-
-                PackageItem musicNextItem = new PackageItem(getContext().getResources().getString(R.string.music_next_entry),
-                        R.drawable.ic_music_next, MUSIC_NEXT_ENTRY);
-                mInstalledPackages.add(0, musicNextItem);
-
-                PackageItem musicPrevItem = new PackageItem(getContext().getResources().getString(R.string.music_prev_entry),
-                        R.drawable.ic_music_prev, MUSIC_PREV_ENTRY);
-                mInstalledPackages.add(0, musicPrevItem);
-
-                PackageItem musicPlayItem = new PackageItem(getContext().getResources().getString(R.string.music_play_entry),
-                        R.drawable.ic_music_play, MUSIC_PLAY_ENTRY);
-                mInstalledPackages.add(0, musicPlayItem);
-
-                PackageItem disabledItem = new PackageItem(getContext().getResources().getString(R.string.disabled_entry),
-                        R.drawable.ic_disabled, DISABLED_ENTRY);
-                mInstalledPackages.add(0, disabledItem);
-
-                notifyDataSetChanged();
-                updatePreferenceViews();
-            }
-        };
 
         public AppSelectListAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
-            reloadList();
         }
 
         @Override
@@ -184,35 +160,6 @@ public class AppSelectListPreference extends DialogPreference implements DialogI
             return convertView;
         }
 
-        private void reloadList() {
-            mInstalledPackages.clear();
-            new Thread(this).start();
-        }
-
-        @Override
-        public void run() {
-            final Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-            mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-            List<ResolveInfo> installedAppsInfo = mPm.queryIntentActivities(mainIntent, 0);
-
-            for (ResolveInfo info : installedAppsInfo) {
-                ActivityInfo activity = info.activityInfo;
-                ApplicationInfo appInfo = activity.applicationInfo;
-                ComponentName componentName = new ComponentName(appInfo.packageName, activity.name);
-                CharSequence label = null;
-                try {
-                    label = activity.loadLabel(mPm);
-                } catch (Exception e) {
-                }
-                if (label != null) {
-                    final PackageItem item = new PackageItem(activity.loadLabel(mPm), 0, componentName);
-                    mInstalledPackages.add(item);
-                }
-            }
-            Collections.sort(mInstalledPackages);
-            mHandler.obtainMessage(0).sendToTarget();
-        }
-
         private PackageItem resolveApplication(ComponentName componentName) {
             for (PackageItem item : mInstalledPackages) {
                 if (item.mComponentName != null && item.mComponentName.equals(componentName)) {
@@ -239,9 +186,18 @@ public class AppSelectListPreference extends DialogPreference implements DialogI
         init();
     }
 
+    public void setPackageList(List<PackageItem> installedPackages) {
+        mInstalledPackages.clear();
+        mInstalledPackages.addAll(installedPackages);
+        addSpecialApps();
+        mAdapter.notifyDataSetChanged();
+        updatePreferenceViews();
+    }
+
     private void init() {
         mPm = getContext().getPackageManager();
-        setWidgetLayoutResource(R.layout.applist_preference);
+        setDialogLayoutResource(R.layout.preference_dialog_applist);
+        setLayoutResource(R.layout.preference_app_select);
         setNegativeButtonText(android.R.string.cancel);
         setPositiveButtonText(null);
         setDialogTitle(R.string.choose_app);
@@ -249,86 +205,88 @@ public class AppSelectListPreference extends DialogPreference implements DialogI
         mAdapter = new AppSelectListAdapter(getContext());
     }
 
+    private void addSpecialApps() {
+        PackageItem cameraItem = new PackageItem(getContext().getResources().getString(R.string.camera_entry),
+                R.drawable.ic_camera, CAMERA_ENTRY);
+        mInstalledPackages.add(0, cameraItem);
+
+        PackageItem torchItem = new PackageItem(getContext().getResources().getString(R.string.torch_entry),
+                R.drawable.ic_flashlight, TORCH_ENTRY);
+        mInstalledPackages.add(0, torchItem);
+
+        PackageItem musicNextItem = new PackageItem(getContext().getResources().getString(R.string.music_next_entry),
+                R.drawable.ic_music_next, MUSIC_NEXT_ENTRY);
+        mInstalledPackages.add(0, musicNextItem);
+
+        PackageItem musicPrevItem = new PackageItem(getContext().getResources().getString(R.string.music_prev_entry),
+                R.drawable.ic_music_prev, MUSIC_PREV_ENTRY);
+        mInstalledPackages.add(0, musicPrevItem);
+
+        PackageItem musicPlayItem = new PackageItem(getContext().getResources().getString(R.string.music_play_entry),
+                R.drawable.ic_music_play, MUSIC_PLAY_ENTRY);
+        mInstalledPackages.add(0, musicPlayItem);
+
+        PackageItem wakeItem = new PackageItem(getContext().getResources().getString(R.string.wake_entry),
+                R.drawable.ic_wakeup, WAKE_ENTRY);
+        mInstalledPackages.add(0, wakeItem);
+
+        PackageItem volumeUpItem = new PackageItem(
+                getContext().getResources().getString(R.string.volume_up),
+                R.drawable.ic_settings_sound, VOLUME_UP_ENTRY);
+        mInstalledPackages.add(0, volumeUpItem);
+
+        PackageItem volumeDownItem = new PackageItem(
+                getContext().getResources().getString(R.string.volume_down),
+                R.drawable.ic_settings_sound, VOLUME_DOWN_ENTRY);
+        mInstalledPackages.add(0, volumeDownItem);
+
+        PackageItem browseScrollDownItem = new PackageItem(
+                getContext().getResources().getString(R.string.browse_scroll_down),
+                R.drawable.arrow_collapse_down, BROWSE_SCROLL_DOWN_ENTRY);
+        mInstalledPackages.add(0, browseScrollDownItem);
+
+        PackageItem browseScrollUpItem = new PackageItem(
+                getContext().getResources().getString(R.string.browse_scroll_up),
+                R.drawable.arrow_collapse_up, BROWSE_SCROLL_UP_ENTRY);
+        mInstalledPackages.add(0, browseScrollUpItem);
+
+        PackageItem navigateBackItem = new PackageItem(
+                getContext().getResources().getString(R.string.navigate_back),
+                R.drawable.back, NAVIGATE_BACK_ENTRY);
+        mInstalledPackages.add(0, navigateBackItem);
+
+        PackageItem navigateHomeItem = new PackageItem(
+                getContext().getResources().getString(R.string.navigate_home),
+                R.drawable.home, NAVIGATE_HOME_ENTRY);
+        mInstalledPackages.add(0, navigateHomeItem);
+
+        PackageItem navigateRecentItem = new PackageItem(
+                getContext().getResources().getString(R.string.navigate_recent),
+                    R.drawable.recent, NAVIGATE_RECENT_ENTRY);
+        mInstalledPackages.add(0, navigateRecentItem);
+
+        PackageItem disabledItem = new PackageItem(getContext().getResources().getString(R.string.disabled_entry),
+                R.drawable.ic_disabled, DISABLED_ENTRY);
+        mInstalledPackages.add(0, disabledItem);
+    }
+
     @Override
-    protected View onCreateView(ViewGroup parent) {
-        View v = super.onCreateView(parent);
-        mAppIcon = (ImageView) v.findViewById(R.id.app_icon);
+    protected void onSetInitialValue(boolean restorePersistedValue, Object defaultValue) {
+        super.onSetInitialValue(restorePersistedValue, defaultValue);
         if (mTitle != null) {
             setSummary(mTitle);
         } else {
             setSummary(getContext().getResources().getString(R.string.not_ready_summary));
         }
-        if (mAppIconDrawable != null) {
-            mAppIcon.setImageDrawable(mAppIconDrawable);
-        } else {
-            mAppIcon.setImageResource(mAppIconResourceId);
-        }
-        return v;
-    }
-
-    private void updatePreferenceViews() {
-        String name = null;
-        if (shouldPersist()) {
-            name = getPersistedString(null);
-        } else {
-            name = mValue;
-        }
-
-        if (name != null) {
-            if (mTitle == null) {
-                mAppIconDrawable = null;
-                mAppIconResourceId = 0;
-                if (name.equals(DISABLED_ENTRY)) {
-                    mTitle = getContext().getResources().getString(R.string.disabled_entry);
-                    mAppIconResourceId = R.drawable.ic_disabled;
-                } else if (name.equals(TORCH_ENTRY)) {
-                    mTitle = getContext().getResources().getString(R.string.torch_entry);
-                    mAppIconResourceId = R.drawable.ic_flashlight;
-                } else if (name.equals(CAMERA_ENTRY)) {
-                    mTitle = getContext().getResources().getString(R.string.camera_entry);
-                    mAppIconResourceId = R.drawable.ic_camera;
-                } else if (name.equals(MUSIC_PLAY_ENTRY)) {
-                    mTitle = getContext().getResources().getString(R.string.music_play_entry);
-                    mAppIconResourceId = R.drawable.ic_music_play;
-                } else if (name.equals(MUSIC_NEXT_ENTRY)) {
-                    mTitle = getContext().getResources().getString(R.string.music_next_entry);
-                    mAppIconResourceId = R.drawable.ic_music_next;
-                } else if (name.equals(MUSIC_PREV_ENTRY)) {
-                    mTitle = getContext().getResources().getString(R.string.music_prev_entry);
-                    mAppIconResourceId = R.drawable.ic_music_prev;
-                } else {
-                    ComponentName componentName = ComponentName.unflattenFromString(name);
-                    PackageItem item = mAdapter.resolveApplication(componentName);
-                    if (item != null) {
-                        mTitle = item.mTitle;
-                        mAppIconDrawable = resolveAppIcon(item);
-                    } else {
-                        mTitle = getContext().getResources().getString(R.string.resolve_failed_summary);
-                    }
-                }
-            }
-        } else {
-            mTitle = getContext().getResources().getString(R.string.disabled_entry);
-            mAppIconResourceId = R.drawable.ic_disabled;
-        }
-
-        if (mAppIcon != null) {
-            setSummary(mTitle);
-            if (mAppIconDrawable != null) {
-                mAppIcon.setImageDrawable(mAppIconDrawable);
-            } else {
-                mAppIcon.setImageResource(mAppIconResourceId);
-            }
-        }
-    }
-
-    private Drawable getDefaultActivityIcon() {
-        return getContext().getResources().getDrawable(android.R.drawable.sym_def_app_icon);
+        mAppIconResourceId = R.drawable.ic_disabled;
+        setIcon(mAppIconResourceId);
     }
 
     @Override
-    protected View onCreateDialogView() {
-        final ListView list = new ListView(getContext());
+    protected void onBindDialogView(View view) {
+        super.onBindDialogView(view);
+
+        final ListView list = (ListView) view.findViewById(R.id.applist);
         list.setAdapter(mAdapter);
         list.setOnItemClickListener(new OnItemClickListener() {
             @Override
@@ -352,7 +310,86 @@ public class AppSelectListPreference extends DialogPreference implements DialogI
                 getDialog().dismiss();
             }
         });
-        return list;
+    }
+
+    private void updatePreferenceViews() {
+        String name = null;
+        if (shouldPersist()) {
+            name = getPersistedString(null);
+        } else {
+            name = mValue;
+        }
+        mAppIconResourceId = R.drawable.ic_disabled;
+
+        if (name != null) {
+            mAppIconDrawable = null;
+            if (name.equals(DISABLED_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.disabled_entry);
+                mAppIconResourceId = R.drawable.ic_disabled;
+            } else if (name.equals(TORCH_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.torch_entry);
+                mAppIconResourceId = R.drawable.ic_flashlight;
+            } else if (name.equals(CAMERA_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.camera_entry);
+                mAppIconResourceId = R.drawable.ic_camera;
+            } else if (name.equals(MUSIC_PLAY_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.music_play_entry);
+                mAppIconResourceId = R.drawable.ic_music_play;
+            } else if (name.equals(MUSIC_NEXT_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.music_next_entry);
+                mAppIconResourceId = R.drawable.ic_music_next;
+            } else if (name.equals(MUSIC_PREV_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.music_prev_entry);
+                mAppIconResourceId = R.drawable.ic_music_prev;
+            } else if (name.equals(WAKE_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.wake_entry);
+                mAppIconResourceId = R.drawable.ic_wakeup;
+            } else if (name.equals(VOLUME_UP_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.volume_up);
+                mAppIconResourceId = R.drawable.ic_settings_sound;
+            } else if (name.equals(VOLUME_DOWN_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.volume_down);
+                mAppIconResourceId = R.drawable.ic_settings_sound;
+            } else if (name.equals(BROWSE_SCROLL_DOWN_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.browse_scroll_down);
+                mAppIconResourceId = R.drawable.arrow_collapse_down;
+            } else if (name.equals(BROWSE_SCROLL_UP_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.browse_scroll_up);
+                mAppIconResourceId = R.drawable.arrow_collapse_up;
+            } else if (name.equals(NAVIGATE_BACK_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.navigate_back);
+                mAppIconResourceId = R.drawable.back;
+            } else if (name.equals(NAVIGATE_HOME_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.navigate_home);
+                mAppIconResourceId = R.drawable.home;
+            } else if (name.equals(NAVIGATE_RECENT_ENTRY)) {
+                mTitle = getContext().getResources().getString(R.string.navigate_recent);
+                mAppIconResourceId = R.drawable.recent;
+            } else {
+                ComponentName componentName = ComponentName.unflattenFromString(name);
+                PackageItem item = mAdapter.resolveApplication(componentName);
+                if (item != null) {
+                    mTitle = item.mTitle;
+                    mAppIconDrawable = resolveAppIcon(item);
+                } else {
+                    mTitle = getContext().getResources().getString(R.string.resolve_failed_summary);
+                }
+            }
+        } else {
+            mTitle = getContext().getResources().getString(R.string.disabled_entry);
+            mAppIconResourceId = R.drawable.ic_disabled;
+        }
+
+        setSummary(mTitle);
+        if (mAppIconDrawable != null) {
+            setIcon(mAppIconDrawable);
+        } else {
+            setIcon(mAppIconResourceId);
+        }
+    }
+
+    private Drawable getDefaultActivityIcon() {
+        return getContext().getResources().getDrawable(android.R.drawable.sym_def_app_icon);
     }
 
     public String getValue() {
@@ -367,11 +404,19 @@ public class AppSelectListPreference extends DialogPreference implements DialogI
         Drawable appIcon = null;
         try {
             appIcon = mPm.getActivityIcon(item.mComponentName);
-            if (appIcon == null) {
-                appIcon = getDefaultActivityIcon();
-            }
-        } catch (Exception e) {
+        } catch (PackageManager.NameNotFoundException e) {
+        }
+        if (appIcon == null) {
+            appIcon = getDefaultActivityIcon();
         }
         return appIcon;
+    }
+
+    public static class AppSelectListPreferenceDialogFragment
+            extends CustomDialogPreference.CustomPreferenceDialogFragment {
+        public static CustomDialogPreference.CustomPreferenceDialogFragment
+                newInstance(String key) {
+            return CustomDialogPreference.CustomPreferenceDialogFragment.newInstance(key);
+        }
     }
 }

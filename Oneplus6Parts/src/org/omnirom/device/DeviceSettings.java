@@ -21,17 +21,13 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.res.Resources;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceScreen;
-import android.preference.TwoStatePreference;
+import android.support.v14.preference.PreferenceFragment;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceCategory;
+import android.support.v7.preference.PreferenceScreen;
+import android.support.v7.preference.TwoStatePreference;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -41,51 +37,38 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.util.Log;
 
-public class DeviceSettings extends PreferenceActivity implements
+public class DeviceSettings extends PreferenceFragment implements
         Preference.OnPreferenceChangeListener {
-
-    public static final String KEY_VIBSTRENGTH = "vib_strength";
 
     private static final String KEY_SLIDER_MODE_TOP = "slider_mode_top";
     private static final String KEY_SLIDER_MODE_CENTER = "slider_mode_center";
     private static final String KEY_SLIDER_MODE_BOTTOM = "slider_mode_bottom";
+    //private static final String KEY_BUTTON_CATEGORY = "buttons_category";
     private static final String KEY_CATEGORY_GRAPHICS = "graphics";
-    private static final String KEY_CATEGORY_DISPLAY = "display";
 
-    public static final String KEY_SWAPKEYS_SWITCH = "swapkeys";
     public static final String KEY_SRGB_SWITCH = "srgb";
     public static final String KEY_HBM_SWITCH = "hbm";
     public static final String KEY_PROXI_SWITCH = "proxi";
     public static final String KEY_DCI_SWITCH = "dci";
-    final String KEY_DEVICE_DOZE = "device_doze";
-    final String KEY_DEVICE_DOZE_PACKAGE_NAME = "org.lineageos.settings.doze";
+    public static final String KEY_NIGHT_SWITCH = "night";
+    public static final String KEY_ADAPTIVE_SWITCH = "adaptive";
+    public static final String KEY_ONEPLUS_SWITCH = "oneplus";
 
-    public static final String SLIDER_DEFAULT_VALUE = "3,1,0";
+    public static final String KEY_OTG_SWITCH = "otg_switch";
 
-    private VibratorStrengthPreference mVibratorStrength;
+    public static final String SLIDER_DEFAULT_VALUE = "2,1,0";
+
     private ListPreference mSliderModeTop;
     private ListPreference mSliderModeCenter;
     private ListPreference mSliderModeBottom;
-    private TwoStatePreference mSwapKeysSwitch;
-    private TwoStatePreference mSRGBModeSwitch;
-    private TwoStatePreference mHBMModeSwitch;
-    private TwoStatePreference mDCIModeSwitch;
+    private static TwoStatePreference mHBMModeSwitch;
+    //private PreferenceCategory buttonCategory;
+    private static TwoStatePreference mOtgSwitch;
+
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
-
-        addPreferencesFromResource(R.xml.main);
-
-        ListView lv = getListView();
-        lv.setDivider(new ColorDrawable(Color.TRANSPARENT));
-        lv.setDividerHeight(0);
-
-        mVibratorStrength = (VibratorStrengthPreference) findPreference(KEY_VIBSTRENGTH);
-        if (mVibratorStrength != null) {
-            mVibratorStrength.setEnabled(VibratorStrengthPreference.isSupported());
-        }
+    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        setPreferencesFromResource(R.xml.main, rootKey);
 
         mSliderModeTop = (ListPreference) findPreference(KEY_SLIDER_MODE_TOP);
         mSliderModeTop.setOnPreferenceChangeListener(this);
@@ -108,53 +91,20 @@ public class DeviceSettings extends PreferenceActivity implements
         mSliderModeBottom.setValueIndex(valueIndex);
         mSliderModeBottom.setSummary(mSliderModeBottom.getEntries()[valueIndex]);
 
-        mSwapKeysSwitch = (TwoStatePreference) findPreference(KEY_SWAPKEYS_SWITCH);
-        mSwapKeysSwitch.setEnabled(SwapHwKeysSwitch.isSupported());
-        mSwapKeysSwitch.setChecked(SwapHwKeysSwitch.isCurrentlyEnabled(this));
-        mSwapKeysSwitch.setOnPreferenceChangeListener(new SwapHwKeysSwitch());
-
-        mSRGBModeSwitch = (TwoStatePreference) findPreference(KEY_SRGB_SWITCH);
-        mSRGBModeSwitch.setEnabled(SRGBModeSwitch.isSupported());
-        mSRGBModeSwitch.setChecked(SRGBModeSwitch.isCurrentlyEnabled(this));
-        mSRGBModeSwitch.setOnPreferenceChangeListener(new SRGBModeSwitch());
-
         mHBMModeSwitch = (TwoStatePreference) findPreference(KEY_HBM_SWITCH);
         mHBMModeSwitch.setEnabled(HBMModeSwitch.isSupported());
-        mHBMModeSwitch.setChecked(HBMModeSwitch.isCurrentlyEnabled(this));
+        mHBMModeSwitch.setChecked(HBMModeSwitch.isCurrentlyEnabled(this.getContext()));
         mHBMModeSwitch.setOnPreferenceChangeListener(new HBMModeSwitch());
 
-        mDCIModeSwitch = (TwoStatePreference) findPreference(KEY_DCI_SWITCH);
-        boolean isPanelSupported = DCIModeSwitch.isSupportedPanel();
-        if (isPanelSupported) {
-            mDCIModeSwitch.setEnabled(DCIModeSwitch.isSupported());
-            mDCIModeSwitch.setChecked(DCIModeSwitch.isCurrentlyEnabled(this));
-            mDCIModeSwitch.setOnPreferenceChangeListener(new DCIModeSwitch());
-        } else {
-            PreferenceCategory graphicsCategory = (PreferenceCategory) findPreference(KEY_CATEGORY_GRAPHICS);
-            graphicsCategory.removePreference(mDCIModeSwitch);
-        }
-
-        if (!isAppInstalled(KEY_DEVICE_DOZE_PACKAGE_NAME)) {
-            PreferenceCategory displayCategory = (PreferenceCategory) findPreference(KEY_CATEGORY_DISPLAY);
-            displayCategory.removePreference(findPreference(KEY_DEVICE_DOZE));
-        }
+        mOtgSwitch = (TwoStatePreference) findPreference(KEY_OTG_SWITCH);
+        mOtgSwitch.setEnabled(UsbOtgSwitch.isSupported());
+        mOtgSwitch.setChecked(UsbOtgSwitch.isCurrentlyEnabled(this.getContext()));
+        mOtgSwitch.setOnPreferenceChangeListener(new UsbOtgSwitch());
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        case android.R.id.home:
-            finish();
-            return true;
-        default:
-            break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
-        return super.onPreferenceTreeClick(preferenceScreen, preference);
+    public boolean onPreferenceTreeClick(Preference preference) {
+        return super.onPreferenceTreeClick(preference);
     }
 
     @Override
@@ -181,20 +131,9 @@ public class DeviceSettings extends PreferenceActivity implements
         return true;
     }
 
-    private boolean isAppInstalled(String uri) {
-        PackageManager pm = getPackageManager();
-        try {
-            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
-        }
-
-        return false;
-    }
-
     private int getSliderAction(int position) {
-        String value = Settings.System.getString(getContentResolver(),
-                    Settings.System.BUTTON_EXTRA_KEY_MAPPING);
+        String value = Settings.System.getString(getContext().getContentResolver(),
+                    Settings.System.OMNI_BUTTON_EXTRA_KEY_MAPPING);
         final String defaultValue = SLIDER_DEFAULT_VALUE;
 
         if (value == null) {
@@ -211,8 +150,8 @@ public class DeviceSettings extends PreferenceActivity implements
     }
 
     private void setSliderAction(int position, int action) {
-        String value = Settings.System.getString(getContentResolver(),
-                    Settings.System.BUTTON_EXTRA_KEY_MAPPING);
+        String value = Settings.System.getString(getContext().getContentResolver(),
+                    Settings.System.OMNI_BUTTON_EXTRA_KEY_MAPPING);
         final String defaultValue = SLIDER_DEFAULT_VALUE;
 
         if (value == null) {
@@ -224,8 +163,8 @@ public class DeviceSettings extends PreferenceActivity implements
             String[] parts = value.split(",");
             parts[position] = String.valueOf(action);
             String newValue = TextUtils.join(",", parts);
-            Settings.System.putString(getContentResolver(),
-                    Settings.System.BUTTON_EXTRA_KEY_MAPPING, newValue);
+            Settings.System.putString(getContext().getContentResolver(),
+                    Settings.System.OMNI_BUTTON_EXTRA_KEY_MAPPING, newValue);
         } catch (Exception e) {
         }
     }

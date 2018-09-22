@@ -21,7 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import android.support.v7.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.TextUtils;
 
@@ -33,8 +33,6 @@ public class Startup extends BroadcastReceiver {
         }
         if (enabled) {
             Utils.writeValue(file, "1");
-        } else {
-            Utils.writeValue(file, "0");
         }
     }
 
@@ -91,23 +89,25 @@ public class Startup extends BroadcastReceiver {
         enabled = !TextUtils.isEmpty(value) && !value.equals(AppSelectListPreference.DISABLED_ENTRY);
         restore(getGestureFile(GestureSettings.KEY_RIGHT_SWIPE_APP), enabled);
 
+        value = Settings.System.getString(context.getContentResolver(), GestureSettings.DEVICE_GESTURE_MAPPING_10);
+        enabled = !TextUtils.isEmpty(value) && !value.equals(AppSelectListPreference.DISABLED_ENTRY);
+        restore(getGestureFile(GestureSettings.FP_GESTURE_LONG_PRESS_APP), enabled);
+
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
         enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_SRGB_SWITCH, false);
         restore(SRGBModeSwitch.getFile(), enabled);
-
-        enabled = sharedPrefs.getBoolean(GestureSettings.KEY_TAPTOWAKE_SWITCH, false);
-        restore(TapToWakeSwitch.getFile(), enabled);
-
-        enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_SWAPKEYS_SWITCH, true);
-        restore(SwapHwKeysSwitch.getFile(), enabled);
-
         enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_HBM_SWITCH, false);
-        if (enabled) {
-            restore(HBMModeSwitch.getFile(), "2");
-        }
+        restore(HBMModeSwitch.getFile(), enabled);
         enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_DCI_SWITCH, false);
         restore(DCIModeSwitch.getFile(), enabled);
+        enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_NIGHT_SWITCH, false);
+        restore(NightModeSwitch.getFile(), enabled);
+        enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_ADAPTIVE_SWITCH, false);
+        restore(AdaptiveModeSwitch.getFile(), enabled);
+        enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_ONEPLUS_SWITCH, false);
+        restore(OnePlusModeSwitch.getFile(), enabled);
 
-        VibratorStrengthPreference.restore(context);
+        enabled = sharedPrefs.getBoolean(DeviceSettings.KEY_OTG_SWITCH, false);
+        restore(UsbOtgSwitch.getFile(), enabled);
     }
 }

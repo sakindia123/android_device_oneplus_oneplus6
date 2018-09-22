@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 The OmniROM Project
+<!-- Copyright (C) 2016 The OmniROM Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,16 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
-    <string-array name="slider_key_action_entries" translatable="false">
-        <item>@string/slider_mode_off</item>
-        <item>@string/slider_mode_vibrate</item>
-        <item>@string/slider_mode_zen</item>
-    </string-array>
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dip">
 
-    <string-array name="slider_key_action_values" translatable="false">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-    </string-array>
-</resources>
+     <ListView android:id="@+id/applist"
+               android:layout_width="match_parent"
+               android:layout_height="match_parent"/>
+
+</LinearLayout>

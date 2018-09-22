@@ -23,11 +23,12 @@ import android.os.SystemProperties;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.Preference.OnPreferenceChangeListener;
 import android.support.v7.preference.PreferenceManager;
+
 import org.omnirom.device.DeviceSettings;
 
-public class DCIModeSwitch implements OnPreferenceChangeListener {
+public class UsbOtgSwitch implements OnPreferenceChangeListener {
 
-    private static final String FILE = "/sys/devices/platform/soc/ae00000.qcom,mdss_mdp/drm/card0/card0-DSI-1/DCI_P3";
+    private static final String FILE = "/sys/class/power_supply/usb/otg_switch";
 
     public static String getFile() {
         if (Utils.fileWritable(FILE)) {
