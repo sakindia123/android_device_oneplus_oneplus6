@@ -204,10 +204,10 @@ public class KeyHandler implements DeviceKeyHandler {
 
         void observe() {
             mContext.getContentResolver().registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.OMNI_DEVICE_PROXI_CHECK_ENABLED),
+                    Settings.System.DEVICE_PROXI_CHECK_ENABLED),
                     false, this);
             mContext.getContentResolver().registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.OMNI_DEVICE_FEATURE_SETTINGS),
+                    Settings.System.DEVICE_FEATURE_SETTINGS),
                     false, this);
             update();
             updateDozeSettings();
@@ -221,7 +221,7 @@ public class KeyHandler implements DeviceKeyHandler {
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             if (uri.equals(Settings.System.getUriFor(
-                    Settings.System.OMNI_DEVICE_FEATURE_SETTINGS))){
+                    Settings.System.DEVICE_FEATURE_SETTINGS))){
                 updateDozeSettings();
                 return;
             }
@@ -230,7 +230,7 @@ public class KeyHandler implements DeviceKeyHandler {
 
         public void update() {
             mUseProxiCheck = Settings.System.getIntForUser(
-                    mContext.getContentResolver(), Settings.System.OMNI_DEVICE_PROXI_CHECK_ENABLED, 1,
+                    mContext.getContentResolver(), Settings.System.DEVICE_PROXI_CHECK_ENABLED, 1,
                     UserHandle.USER_CURRENT) == 1;
         }
     }
@@ -442,7 +442,7 @@ public class KeyHandler implements DeviceKeyHandler {
 
     private int getSliderAction(int position) {
         String value = Settings.System.getStringForUser(mContext.getContentResolver(),
-                    Settings.System.OMNI_BUTTON_EXTRA_KEY_MAPPING,
+                    Settings.System.BUTTON_EXTRA_KEY_MAPPING,
                     UserHandle.USER_CURRENT);
         final String defaultValue = DeviceSettings.SLIDER_DEFAULT_VALUE;
 
@@ -591,7 +591,7 @@ public class KeyHandler implements DeviceKeyHandler {
 
     private void updateDozeSettings() {
         String value = Settings.System.getStringForUser(mContext.getContentResolver(),
-                    Settings.System.OMNI_DEVICE_FEATURE_SETTINGS,
+                    Settings.System.DEVICE_FEATURE_SETTINGS,
                     UserHandle.USER_CURRENT);
         if (DEBUG) Log.i(TAG, "Doze settings = " + value);
         if (!TextUtils.isEmpty(value)) {
